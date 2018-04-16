@@ -1,0 +1,6 @@
+ZwaveSensorLogger.indigoPlugin/Contents/Server Plugin/plugin2.py
+*.log
+*zip*
+*doc*
+*lnk*
+Thumbs.db

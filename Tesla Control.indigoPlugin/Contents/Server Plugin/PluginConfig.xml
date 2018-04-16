@@ -1,0 +1,9 @@
+<?xml version="1.0"?>
+<PluginConfig>
+	<Field type="textfield" id="username" >
+		<Label>Tesla Motors Email:</Label>
+	</Field>
+	<Field type="textfield" id="password" secure="true">
+		<Label>Tesla Motors Password:</Label>
+	</Field>
+</PluginConfig>

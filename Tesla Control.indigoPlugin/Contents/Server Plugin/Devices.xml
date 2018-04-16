@@ -1,0 +1,13 @@
+<?xml version="1.0"?>
+<Devices>
+	<Device type="custom" id="teslacontrol">
+		<Name>Tesla Control Module</Name>
+		<ConfigUI>
+			<Field type="menu" id="car">
+				<Label>Car:</Label>
+				<!-- see http://wiki.indigodomo.com/doku.php?id=indigo_5_documentation:plugin_guide#dynamic_lists -->
+				<List class="self" filter="self" method="carListGenerator" />
+			</Field>
+		</ConfigUI>
+	</Device>
+</Devices>

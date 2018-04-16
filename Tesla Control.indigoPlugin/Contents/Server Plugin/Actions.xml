@@ -1,0 +1,94 @@
+<?xml version="1.0"?>
+<Actions>
+	<Action id="wake_up" deviceFilter="self">
+		<Name>Wake Car</Name>
+		<CallbackMethod>vehicleCommand</CallbackMethod>
+	</Action>
+	<Action id="set_valet_mode" deviceFilter="self">
+		<Name>Set Valet Mode</Name>
+		<ConfigUI>
+			<Field type="checkbox" id="valet" defaultValue="true">
+				<Label>Valet Mode:</Label>
+				<Description>Enable</Description>
+			</Field>
+		</ConfigUI>
+		<CallbackMethod>vehicleCommand</CallbackMethod>
+	</Action>
+	<Action id="charge_port_door_open" deviceFilter="self">
+		<Name>Open Charge Port</Name>
+		<CallbackMethod>vehicleCommand</CallbackMethod>
+	</Action>
+	<Action id="charge_standard" deviceFilter="self">
+		<Name>Set Charge Limit to Standard</Name>
+		<CallbackMethod>vehicleCommand</CallbackMethod>
+	</Action>
+	<Action id="charge_max_range" deviceFilter="self">
+		<Name>Set Charge Limit to Max Range</Name>
+		<CallbackMethod>vehicleCommand</CallbackMethod>
+	</Action>
+	<Action id="set_charge_limit" deviceFilter="self">
+		<Name>Set Charge Limit</Name>
+		<CallbackMethod>vehicleCommand</CallbackMethod>
+		<ConfigUI>
+			<Field type="textfield" id="percent">
+				<Label>Percent:</Label>
+			</Field>
+		</ConfigUI>
+	</Action>
+	<Action id="charge_start" deviceFilter="self">
+		<Name>Start Charging</Name>
+		<CallbackMethod>vehicleCommand</CallbackMethod>
+	</Action>
+	<Action id="charge_stop" deviceFilter="self">
+		<Name>Stop Charging</Name>
+		<CallbackMethod>vehicleCommand</CallbackMethod>
+	</Action>
+	<Action id="flash_lights" deviceFilter="self">
+		<Name>Flash Lights</Name>
+		<CallbackMethod>vehicleCommand</CallbackMethod>
+	</Action>
+	<Action id="honk_horn" deviceFilter="self">
+		<Name>Honk Horn</Name>
+		<CallbackMethod>vehicleCommand</CallbackMethod>
+	</Action>
+	<Action id="door_unlock" deviceFilter="self">
+		<Name>Unlock Doors</Name>
+		<CallbackMethod>vehicleCommand</CallbackMethod>
+	</Action>
+	<Action id="door_lock" deviceFilter="self">
+		<Name>Lock Doors</Name>
+		<CallbackMethod>vehicleCommand</CallbackMethod>
+	</Action>
+	<Action id="set_temps" deviceFilter="self">
+		<Name>Set Temperature</Name>
+		<ConfigUI>
+			<Field type="textfield" id="percent">
+				<Label>Percent:</Label>
+			</Field>
+		</ConfigUI>
+		<CallbackMethod>vehicleCommand</CallbackMethod>
+	</Action>
+	<Action id="auto_conditioning_start" deviceFilter="self">
+		<Name>Start HVAC</Name>
+		<CallbackMethod>vehicleCommand</CallbackMethod>
+	</Action>
+	<Action id="auto_conditioning_stop" deviceFilter="self">
+		<Name>Stop HVAC</Name>
+		<CallbackMethod>vehicleCommand</CallbackMethod>
+	</Action>
+	<Action id="sun_roof_control" deviceFilter="self">
+		<Name>Move Pano Roof</Name>
+		<CallbackMethod>vehicleCommand</CallbackMethod>
+		<ConfigUI>
+			<Field type="menu" id="state" defaultValue="close">
+				<Label>Set Pano Roof:</Label>
+				<List>
+					<Option value="open">Open</Option>
+					<Option value="close">Close</Option>
+					<Option value="comfort">Comfort</Option>
+					<Option value="vent">Vent</Option>
+				</List>
+			</Field>
+		</ConfigUI>
+	</Action>
+</Actions>
