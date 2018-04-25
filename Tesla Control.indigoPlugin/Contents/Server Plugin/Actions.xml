@@ -4,10 +4,11 @@
 		<Name>Wake Car</Name>
 		<CallbackMethod>vehicleCommand</CallbackMethod>
 	</Action>
+	<Action id="sep1"/>
 	<Action id="set_valet_mode" deviceFilter="self">
 		<Name>Set Valet Mode</Name>
 		<ConfigUI>
-			<Field type="checkbox" id="valet" defaultValue="true">
+			<Field type="checkbox" id="on" defaultValue="true">
 				<Label>Valet Mode:</Label>
 				<Description>Enable</Description>
 			</Field>
@@ -62,8 +63,11 @@
 	<Action id="set_temps" deviceFilter="self">
 		<Name>Set Temperature</Name>
 		<ConfigUI>
-			<Field type="textfield" id="percent">
-				<Label>Percent:</Label>
+			<Field type="textfield" id="driver_temp">
+				<Label>Drivers Temp (celsius):</Label>
+			</Field>
+			<Field type="textfield" id="passenger_temp">
+				<Label>Passenger Side (celsius):</Label>
 			</Field>
 		</ConfigUI>
 		<CallbackMethod>vehicleCommand</CallbackMethod>
@@ -90,5 +94,31 @@
 				</List>
 			</Field>
 		</ConfigUI>
+	</Action>
+	<Action id="sep2"/>
+	<Action id="charge_state" deviceFilter="self">
+		<Name>Get Charge State</Name>
+		<CallbackMethod>vehicleStatus</CallbackMethod>
+	</Action>
+	<Action id="climate_state" deviceFilter="self">
+		<Name>Get Climate State</Name>
+		<CallbackMethod>vehicleStatus</CallbackMethod>
+	</Action>
+	<Action id="drive_state" deviceFilter="self">
+		<Name>Get Drive State</Name>
+		<CallbackMethod>vehicleStatus</CallbackMethod>
+	</Action>
+	<Action id="vehicle_state" deviceFilter="self">
+		<Name>Get Vehicle State</Name>
+		<CallbackMethod>vehicleStatus</CallbackMethod>
+	</Action>
+	<Action id="gui_settings" deviceFilter="self">
+		<Name>Get GUI Settings</Name>
+		<CallbackMethod>vehicleStatus</CallbackMethod>
+	</Action>
+	<Action id="sep3"/>
+	<Action id="doRefresh" deviceFilter="self">
+		<Name>Refresh vehicle states</Name>
+		<CallbackMethod>vehicleStatus</CallbackMethod>
 	</Action>
 </Actions>

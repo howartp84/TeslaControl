@@ -1,13 +1,53 @@
 <?xml version="1.0"?>
 <Devices>
 	<Device type="custom" id="teslacontrol">
-		<Name>Tesla Control Module</Name>
+		<Name>Tesla Vehicle</Name>
 		<ConfigUI>
 			<Field type="menu" id="car">
 				<Label>Car:</Label>
 				<!-- see http://wiki.indigodomo.com/doku.php?id=indigo_5_documentation:plugin_guide#dynamic_lists -->
 				<List class="self" filter="self" method="carListGenerator" />
 			</Field>
+			<Field id="lstateToDisplay" type="label">
+				<Label>"State to display" allows you to choose which of the many Tesla device states to use as the UI device state. The default is the battery level state, but you may prefer the remaining miles or current temperature for example.</Label>
+			</Field>
+			<Field id="stateToDisplay" type="textfield" defaultValue="battery_level">
+				<Label>State to display:</Label>
+			</Field>
+			<Field id="latLongHome" type="textfield" defaultValue="37.394838,-122.150389">
+				<Label>Lat,Long of Home Address:</Label>
+			</Field>
+			<Field id="latLongWork" type="textfield" defaultValue="37.331820,-122.03118">
+				<Label>Lat,Long of Work Address:</Label>
+			</Field>
 		</ConfigUI>
+		<States>
+			<State id="displayState">
+				<ValueType>String</ValueType>
+				<TriggerLabel>displayState</TriggerLabel>
+				<ControlPageLabel>displayState</ControlPageLabel>
+			</State>
+			<State id="distanceFromHomeKm">
+				<ValueType>String</ValueType>
+				<TriggerLabel>distanceFromHomeKm</TriggerLabel>
+				<ControlPageLabel>distanceFromHomeKm</ControlPageLabel>
+			</State>
+			<State id="distanceFromWorkKm">
+				<ValueType>String</ValueType>
+				<TriggerLabel>distanceFromWorkKm</TriggerLabel>
+				<ControlPageLabel>distanceFromWorkKm</ControlPageLabel>
+			</State>
+			<State id="distanceFromHomeM">
+				<ValueType>String</ValueType>
+				<TriggerLabel>distanceFromHomeM</TriggerLabel>
+				<ControlPageLabel>distanceFromHomeM</ControlPageLabel>
+			</State>
+			<State id="distanceFromWorkM">
+				<ValueType>String</ValueType>
+				<TriggerLabel>distanceFromWorkM</TriggerLabel>
+				<ControlPageLabel>distanceFromWorkM</ControlPageLabel>
+			</State>
+		</States>
+		<UiDisplayStateId>displayState</UiDisplayStateId>
 	</Device>
 </Devices>
