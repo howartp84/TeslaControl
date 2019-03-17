@@ -135,6 +135,8 @@ class Plugin(indigo.PluginBase):
 			self.vehicleStatus2(action,vehicleId,devId)
 			action = "climate_state"
 			self.vehicleStatus2(action,vehicleId,devId)
+			action = "vehicle_state"
+			self.vehicleStatus2(action, vehicleId, devId)
 			return
 		
 		response = vehicle.data_request(statusName)
@@ -144,7 +146,11 @@ class Plugin(indigo.PluginBase):
 			self.states[k] = v
 			dev.stateListOrDisplayStateIdChanged()
 			if k in dev.states:
-				dev.updateStateOnServer(k,v)
+				try:
+					dev.updateStateOnServer(k,v)
+				except TypeError:
+					self.debugLog("Skipping state %s; TypeError - value is not bool, int, real, or string: %s" % (k, v))
+					continue
 			else:
 				self.debugLog("Not found: %s" % str(k))
 			if (k == dev.ownerProps.get("stateToDisplay","")):
