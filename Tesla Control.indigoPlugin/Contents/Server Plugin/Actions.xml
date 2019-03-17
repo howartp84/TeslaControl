@@ -15,6 +15,16 @@
 		</ConfigUI>
 		<CallbackMethod>vehicleCommand</CallbackMethod>
 	</Action>
+	<Action id="set_sentry_mode" deviceFilter="self">
+		<Name>Set Sentry Mode</Name>
+		<ConfigUI>
+			<Field type="checkbox" id="on" defaultValue="true">
+				<Label>Sentry Mode:</Label>
+				<Description>Enable</Description>
+			</Field>
+		</ConfigUI>
+		<CallbackMethod>vehicleCommand</CallbackMethod>
+	</Action>
 	<Action id="charge_port_door_open" deviceFilter="self">
 		<Name>Open Charge Port</Name>
 		<CallbackMethod>vehicleCommand</CallbackMethod>
