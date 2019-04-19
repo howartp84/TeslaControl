@@ -31,10 +31,44 @@ class Plugin(indigo.PluginBase):
 	########################################
 	def __init__(self, pluginId, pluginDisplayName, pluginVersion, pluginPrefs):
 		indigo.PluginBase.__init__(self, pluginId, pluginDisplayName, pluginVersion, pluginPrefs)
+		self.debug = pluginPrefs.get("showDebugInfo", True)
 		self.vehicles = []
-		self.debug = True
+		#self.debug = True
 		
 		self.states = {}
+		
+		self.strstates = {}
+		self.numstates = {}
+		self.boolstates = {}
+		
+		self.resetStates = True
+		
+		self.cmdStates = {}
+
+		self.cmdStates["set_valet_mode"] = ""
+		self.cmdStates["charge_port_door_open"] = "charge_state"
+		self.cmdStates["charge_standard"] = "charge_state"
+		self.cmdStates["charge_max_range"] = "charge_state"
+		self.cmdStates["set_charge_limit"] = "charge_state"
+		self.cmdStates["charge_start"] = "charge_state"
+		self.cmdStates["charge_stop"] = "charge_state"
+		self.cmdStates["flash_lights"] = "vehicle_state"
+		self.cmdStates["honk_horn"] = ""
+		self.cmdStates["door_unlock"] = "vehicle_state"
+		self.cmdStates["door_lock"] = "vehicle_state"
+		self.cmdStates["set_temps"] = "climate_state"
+		self.cmdStates["auto_conditioning_start"] = "climate_state"
+		self.cmdStates["auto_conditioning_stop"] = "climate_state"
+		self.cmdStates["sun_roof_control"] = "vehicle_state"
+		self.cmdStates["actuate_trunk"] = ""
+		self.cmdStates["charge_port_door_close"] = "charge_state"
+		self.cmdStates["remote_start_drive"] = ""
+		self.cmdStates["set_sentry_mode"] = ""
+		self.cmdStates["reset_valet_pin"] = ""
+		#self.cmdStates["navigation_request"] = ""  #TODO
+		self.cmdStates["remote_seat_heater_request"] = ""
+		self.cmdStates["remote_steering_wheel_heater_request"] = ""
+		
 		
 	########################################
 	#def startup(self):
@@ -45,10 +79,26 @@ class Plugin(indigo.PluginBase):
 	def getDeviceStateList(self, dev): #Override state list
 		stateList = indigo.PluginBase.getDeviceStateList(self, dev)      
 		if stateList is not None:
-			for key in self.states.iterkeys():
+#			for key in self.states.iterkeys():
+#				dynamicState1 = self.getDeviceStateDictForStringType(key, key, key)
+#				stateList.append(dynamicState1)
+			#self.debugLog(str(stateList))
+			for key in self.strstates.iterkeys():
+				if ((self.resetStates) and (key in stateList)):
+					stateList.remove(key)
 				dynamicState1 = self.getDeviceStateDictForStringType(key, key, key)
 				stateList.append(dynamicState1)
-		return stateList
+			for key in self.numstates.iterkeys():
+				if ((self.resetStates) and (key in stateList)):
+					stateList.remove(key)
+				dynamicState1 = self.getDeviceStateDictForNumberType(key, key, key)
+				stateList.append(dynamicState1)
+			for key in self.boolstates.iterkeys():
+				if ((self.resetStates) and (key in stateList)):
+					stateList.remove(key)
+				dynamicState1 = self.getDeviceStateDictForBoolTrueFalseType(key, key, key)
+				stateList.append(dynamicState1)
+		return sorted(stateList)
 
 	def getVehicles(self):
 		if not self.vehicles:
@@ -105,7 +155,7 @@ class Plugin(indigo.PluginBase):
 			self.debugLog(response)
 			if (response["response"]["reason"] in validReasons) or response["response"]["result"] == True:
 				self.debugLog("Success")
-				action.pluginTypeId = "doRefresh"
+				action.pluginTypeId = self.cmdStates[commandName]
 				self.vehicleStatus(action,dev)
 				break
 			if i >= 5:
@@ -119,6 +169,8 @@ class Plugin(indigo.PluginBase):
 		vehicleId = dev.pluginProps['car']
 		statusName = action.pluginTypeId
 		#self.debugLog(str(dev))
+		if (statusName == ""):
+			return
 		self.vehicleStatus2(statusName,vehicleId,dev.id)
 		
 	def vehicleStatus2(self,statusName,vehicleId,devId):
@@ -126,29 +178,60 @@ class Plugin(indigo.PluginBase):
 		vehicle = self.getVehicles()[vehicleId]
 		dev = indigo.devices[devId]
 		
-		self.debugLog(statusName)
+		#self.debugLog(statusName)
 		
 		if (statusName == "doRefresh"):
 			action = "charge_state"
 			self.vehicleStatus2(action,vehicleId,devId)
-			action= "drive_state"
+			action = "drive_state"
 			self.vehicleStatus2(action,vehicleId,devId)
 			action = "climate_state"
+			self.vehicleStatus2(action,vehicleId,devId)
+			action = "vehicle_state"
+			self.vehicleStatus2(action,vehicleId,devId)
+			action = "gui_settings"
+			self.vehicleStatus2(action,vehicleId,devId)
+			action = "vehicle_config"
 			self.vehicleStatus2(action,vehicleId,devId)
 			return
 		
 		response = vehicle.data_request(statusName)
 		self.debugLog(str(response))
-		for k,v in response.items():
-			self.debugLog("State %s, value %s" % (k,v))
+		self.debugLog("")
+		for k,v in sorted(response.items()):
+			self.debugLog("State %s, value %s, type %s" % (k,v,type(v)))
 			self.states[k] = v
-			dev.stateListOrDisplayStateIdChanged()
-			if k in dev.states:
-				dev.updateStateOnServer(k,v)
+			if (type(v) is dict):
+				indigo.server.log(u"Skipping state %s: JSON Dict found" % (k))
 			else:
-				self.debugLog("Not found: %s" % str(k))
-			if (k == dev.ownerProps.get("stateToDisplay","")):
-				dev.updateStateOnServer("displayState",v)
+				if (k in dev.states) and (self.resetStates == False):
+					#self.debugLog(str(type(v)))
+					dev.updateStateOnServer(k,v)
+					if (k == dev.ownerProps.get("stateToDisplay","")):
+						dev.updateStateOnServer("displayState",v)
+				else:
+					self.resetStates = True #We obviously need to reset states if we've got data for one that doesn't exist
+					if (v == None):
+						self.strstates[k] = v
+					elif (type(v) is float):
+						self.numstates[k] = v
+					elif (type(v) is int):
+						self.numstates[k] = v
+					elif (type(v) is bool):
+						self.boolstates[k] = v
+					elif (type(v) is str):
+						self.strstates[k] = v
+					elif (type(v) is unicode):
+						self.strstates[k] = v
+					else:
+						self.strstates[k] = v
+		if (self.resetStates):
+			dev.stateListOrDisplayStateIdChanged()
+			self.resetStates = False
+			self.vehicleStatus2(statusName,vehicleId,devId) #Re-do this request now the states are reset
+			return
+
+		#self.debugLog(str(dev.states))
 		if (statusName == "drive_state"):
 			self.latLongHome = dev.ownerProps.get("latLongHome","37.394838,-122.150389").split(",")
 			self.latLongWork = dev.ownerProps.get("latLongWork","37.331820,-122.03118").split(",")

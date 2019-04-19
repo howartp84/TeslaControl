@@ -28,22 +28,22 @@
 				<ControlPageLabel>displayState</ControlPageLabel>
 			</State>
 			<State id="distanceFromHomeKm">
-				<ValueType>String</ValueType>
+				<ValueType>Number</ValueType>
 				<TriggerLabel>distanceFromHomeKm</TriggerLabel>
 				<ControlPageLabel>distanceFromHomeKm</ControlPageLabel>
 			</State>
 			<State id="distanceFromWorkKm">
-				<ValueType>String</ValueType>
+				<ValueType>Number</ValueType>
 				<TriggerLabel>distanceFromWorkKm</TriggerLabel>
 				<ControlPageLabel>distanceFromWorkKm</ControlPageLabel>
 			</State>
 			<State id="distanceFromHomeM">
-				<ValueType>String</ValueType>
+				<ValueType>Number</ValueType>
 				<TriggerLabel>distanceFromHomeM</TriggerLabel>
 				<ControlPageLabel>distanceFromHomeM</ControlPageLabel>
 			</State>
 			<State id="distanceFromWorkM">
-				<ValueType>String</ValueType>
+				<ValueType>Number</ValueType>
 				<TriggerLabel>distanceFromWorkM</TriggerLabel>
 				<ControlPageLabel>distanceFromWorkM</ControlPageLabel>
 			</State>

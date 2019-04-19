@@ -12,6 +12,24 @@
 				<Label>Valet Mode:</Label>
 				<Description>Enable</Description>
 			</Field>
+			<Field type="textfield" id="password">
+				<Label>Valet PIN:</Label>
+				<Description>Leave blank to use existing PIN</Description>
+			</Field>
+		</ConfigUI>
+		<CallbackMethod>vehicleCommand</CallbackMethod>
+	</Action>
+	<Action id="reset_valet_pin" deviceFilter="self">
+		<Name>Clear Valet PIN</Name>
+		<CallbackMethod>vehicleCommand</CallbackMethod>
+	</Action>
+	<Action id="set_sentry_mode" deviceFilter="self">
+		<Name>Set Sentry Mode</Name>
+		<ConfigUI>
+			<Field type="checkbox" id="on" defaultValue="true">
+				<Label>Sentry Mode:</Label>
+				<Description>Enable</Description>
+			</Field>
 		</ConfigUI>
 		<CallbackMethod>vehicleCommand</CallbackMethod>
 	</Action>
@@ -60,14 +78,66 @@
 		<Name>Lock Doors</Name>
 		<CallbackMethod>vehicleCommand</CallbackMethod>
 	</Action>
+	<Action id="actuate_trunk" deviceFilter="self">
+		<Name>Unlock the Trunk</Name>
+		<CallbackMethod>vehicleCommand</CallbackMethod>
+		<ConfigUI>
+			<Field type="menu" id="which_trunk" defaultValue="close">
+				<Label>Which trunk:</Label>
+				<List>
+					<Option value="front">Front</Option>
+					<Option value="rear">Rear</Option>
+				</List>
+			</Field>
+		</ConfigUI>
+	</Action>
+		<Action id="remote_start_drive" deviceFilter="self">
+		<Name>Enable Remote Start</Name>
+		<ConfigUI>
+			<Field type="textfield" id="password">
+				<Label>Tesla password:</Label>
+				<Description>Use with caution; suggest leave blank when not using this command.</Description>
+			</Field>
+		</ConfigUI>
+		<CallbackMethod>vehicleCommand</CallbackMethod>
+	</Action>
 	<Action id="set_temps" deviceFilter="self">
-		<Name>Set Temperature</Name>
+		<Name>Set Cabin Temperature</Name>
 		<ConfigUI>
 			<Field type="textfield" id="driver_temp">
 				<Label>Drivers Temp (celsius):</Label>
 			</Field>
 			<Field type="textfield" id="passenger_temp">
 				<Label>Passenger Side (celsius):</Label>
+			</Field>
+		</ConfigUI>
+		<CallbackMethod>vehicleCommand</CallbackMethod>
+	</Action>
+	<Action id="remote_seat_heater_request" deviceFilter="self">
+		<Name>Set Seat Temperature</Name>
+		<ConfigUI>
+			<Field type="textfield" id="heater" defaultValue="0">
+				<Label>Seat:</Label>
+				<Description>0: Driver, 1: Passenger, 2: Rear Left, 4: Rear Centre, 5: Rear Right</Description>
+			</Field>
+			<Field type="menu" id="level" defaultValue="3">
+				<Label>Set Pano Roof:</Label>
+				<List>
+					<Option value="0">0</Option>
+					<Option value="1">1</Option>
+					<Option value="2">2</Option>
+					<Option value="3">3</Option>
+				</List>
+			</Field>
+		</ConfigUI>
+		<CallbackMethod>vehicleCommand</CallbackMethod>
+	</Action>
+	<Action id="remote_steering_wheel_heater_request" deviceFilter="self">
+		<Name>Set Steering Wheel Heater</Name>
+		<ConfigUI>
+			<Field type="checkbox" id="on" defaultValue="true">
+				<Label>Heater:</Label>
+				<Description>Enable</Description>
 			</Field>
 		</ConfigUI>
 		<CallbackMethod>vehicleCommand</CallbackMethod>
@@ -112,13 +182,17 @@
 		<Name>Get Vehicle State</Name>
 		<CallbackMethod>vehicleStatus</CallbackMethod>
 	</Action>
+	<Action id="vehicle_config" deviceFilter="self">
+		<Name>Get Vehicle Config</Name>
+		<CallbackMethod>vehicleStatus</CallbackMethod>
+	</Action>
 	<Action id="gui_settings" deviceFilter="self">
 		<Name>Get GUI Settings</Name>
 		<CallbackMethod>vehicleStatus</CallbackMethod>
 	</Action>
 	<Action id="sep3"/>
 	<Action id="doRefresh" deviceFilter="self">
-		<Name>Refresh vehicle states</Name>
+		<Name>Refresh all vehicle states</Name>
 		<CallbackMethod>vehicleStatus</CallbackMethod>
 	</Action>
 </Actions>

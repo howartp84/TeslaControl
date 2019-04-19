@@ -6,4 +6,7 @@
 	<Field type="textfield" id="password" secure="true">
 		<Label>Tesla Motors Password:</Label>
 	</Field>
+	<Field id="showDebugInfo" type="checkbox">
+		<Label>Enable debugging:</Label>
+	</Field>
 </PluginConfig>
