@@ -116,12 +116,18 @@
 	<Action id="remote_seat_heater_request" deviceFilter="self">
 		<Name>Set Seat Temperature</Name>
 		<ConfigUI>
-			<Field type="textfield" id="heater" defaultValue="0">
-				<Label>Seat:</Label>
-				<Description>0: Driver, 1: Passenger, 2: Rear Left, 4: Rear Centre, 5: Rear Right</Description>
+			<Field type="menu" id="heater" defaultValue="0">
+				<Label>Selected seat:</Label>
+				<List>
+					<Option value="0">Driver</Option>
+					<Option value="1">Passenger</Option>
+					<Option value="2">Rear Left</Option>
+					<Option value="4">Rear Centre</Option>
+					<Option value="5">Rear Right</Option>
+				</List>
 			</Field>
 			<Field type="menu" id="level" defaultValue="3">
-				<Label>Set Pano Roof:</Label>
+				<Label>Level:</Label>
 				<List>
 					<Option value="0">0</Option>
 					<Option value="1">1</Option>

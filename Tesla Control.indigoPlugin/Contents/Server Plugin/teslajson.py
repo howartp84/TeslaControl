@@ -24,6 +24,11 @@ import json
 import datetime
 import calendar
 
+import requests #instead of urllib2.request
+
+import logging
+logger = logging.getLogger("Plugin.Tesla") #Can call it whatever I like
+
 class Connection(object):
 	"""Connection to Tesla Motors API"""
 	def __init__(self,
@@ -51,18 +56,18 @@ class Connection(object):
 		self.expiration = float('inf')
 		self.__sethead(access_token)
 		if not access_token:
-			tesla_client = self.__open("/raw/0a8e0xTJ", baseurl="http://pastebin.com") #http://pastebin.com/raw/0a8e0xTJ   OR  https://pastebin.com/YiLPDggh
-			current_client = tesla_client['v1']
-			self.baseurl = current_client['baseurl']
-			self.api = current_client['api']
+			tesla_client = self.__open2("/raw/pS7Z6yyP", baseurl="http://pastebin.com") #This is TimDorr's version, without id and api
+			#logger.debug("PAH Test")
 			self.oauth = {
 				"grant_type" : "password",
-				"client_id" : current_client['id'],
-				"client_secret" : current_client['secret'],
+				"client_id" : tesla_client[0],
+				"client_secret" : tesla_client[1],
 				"email" : email,
 				"password" : password }
 			self.expiration = 0 # force refresh
-		self.vehicles = [Vehicle(v, self) for v in self.get('vehicles')['response']]
+		treply = self.get('vehicles')
+		#logger.debug(treply)
+		self.vehicles = [Vehicle(v, self) for v in self.get('vehicles')['response']]  #  $array['response']
 
 	def get(self, command):
 		"""Utility command to get data from API"""
@@ -72,8 +77,9 @@ class Connection(object):
 		"""Utility command to post data to API"""
 		now = calendar.timegm(datetime.datetime.now().timetuple())
 		if now > self.expiration:
+			logger.debug(u"Token expired - renewing oauth token for 44 days...")
 			auth = self.__open("/oauth/token", data=self.oauth)
-			self.expiration = auth['created_at'] + auth['expires_in'] - 86400
+			self.expiration = auth['created_at'] + auth['expires_in'] - 86400  #45 days minus 24 hours
 			self.__sethead(auth['access_token'])
 		return self.__open("%s%s" % (self.api, command), headers=self.head, data=data)
 
@@ -85,18 +91,44 @@ class Connection(object):
 		"""Raw urlopen command"""
 		if not baseurl:
 			baseurl = self.baseurl
-		req = Request("%s%s" % (baseurl, url), headers=headers)
-		try:
-			req.data = urlencode(data).encode('utf-8') # Python 3
-		except:
+		#req = Request("%s%s" % (baseurl, url), headers=headers)
+		#try:
+			#req.data = urlencode(data).encode('utf-8') # Python 3
+		#except:
+			#try:
+				#req.add_data(urlencode(data)) # Python 2
+			#except:
+				#pass
+		if (data == None):
+			#resp = urlopen(req)
+			resp = requests.get("%s%s" % (baseurl, url), headers=headers)
+		else:
 			try:
-				req.add_data(urlencode(data)) # Python 2
+				data2 = urlencode(data)
+				resp = requests.post("%s%s" % (baseurl, url), headers=headers, data=data2)
 			except:
-				pass
+				resp = requests.post("%s%s" % (baseurl, url), headers=headers)
+		
+		#charset = resp.info().get('charset', 'utf-8')
+		resp.encoding = 'utf-8'
+		#return json.loads(resp.read().decode(charset))
+		#logger.debug(resp)
+		logger.debug("Pre-JSON: %s" % resp.text)
+		#logger.debug(json.loads(resp.text))
+		return json.loads(resp.text)
+
+	def __open2(self, url, headers={}, data=None, baseurl=""):
+		"""Raw urlopen command"""
+		if not baseurl:
+			baseurl = self.baseurl
+		req = Request("%s%s" % (baseurl, url), headers=headers)
 		resp = urlopen(req)
 		charset = resp.info().get('charset', 'utf-8')
-		return json.loads(resp.read().decode(charset))
-
+		raw = resp.read().decode(charset).splitlines()
+		tID = raw[0][16:]
+		tSecret = raw[1][20:]
+		#raise ValueError("{} {}".format(tID,tSecret)) #For testing
+		return tID, tSecret
 
 class Vehicle(dict):
 	"""Vehicle class, subclassed from dictionary.
@@ -116,7 +148,7 @@ class Vehicle(dict):
 	def data_request(self, name):
 		"""Get vehicle data"""
 		result = self.get('data_request/%s' % name)
-		return result['response']
+		return result
 
 	def wake_up(self):
 		"""Wake the vehicle"""
