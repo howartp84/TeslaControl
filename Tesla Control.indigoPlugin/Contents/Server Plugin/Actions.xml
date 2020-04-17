@@ -171,6 +171,46 @@
 			</Field>
 		</ConfigUI>
 	</Action>
+	<Action id="speed_limit_activate" deviceFilter="self">
+		<Name>Speed Limit: Activate</Name>
+		<ConfigUI>
+			<Field type="textfield" id="pin">
+				<Label>PIN:</Label>
+				<Description>The existing PIN, if already set, otherwise a new PIN</Description>
+			</Field>
+		</ConfigUI>
+		<CallbackMethod>vehicleCommand</CallbackMethod>
+	</Action>
+	<Action id="speed_limit_deactivate" deviceFilter="self">
+		<Name>Speed Limit: Deactivate</Name>
+		<ConfigUI>
+			<Field type="textfield" id="pin">
+				<Label>PIN:</Label>
+				<Description>The current Speed Limit PIN</Description>
+			</Field>
+		</ConfigUI>
+		<CallbackMethod>vehicleCommand</CallbackMethod>
+	</Action>
+	<Action id="speed_limit_set_limit" deviceFilter="self">
+		<Name>Speed Limit: Set Limit</Name>
+		<ConfigUI>
+			<Field type="textfield" id="limit_mph">
+				<Label>Speed Limit (mph):</Label>
+				<Description>Desired maximum speed limit in MPH between 50 and 90</Description>
+			</Field>
+		</ConfigUI>
+		<CallbackMethod>vehicleCommand</CallbackMethod>
+	</Action>
+	<Action id="speed_limit_clear_pin" deviceFilter="self">
+		<Name>Speed Limit: Clear PIN</Name>
+		<ConfigUI>
+			<Field type="textfield" id="pin">
+				<Label>PIN:</Label>
+				<Description>The current Speed Limit PIN</Description>
+			</Field>
+		</ConfigUI>
+		<CallbackMethod>vehicleCommand</CallbackMethod>
+	</Action>
 	<Action id="sep2"/>
 	<Action id="charge_state" deviceFilter="self">
 		<Name>Get Charge State</Name>
@@ -196,8 +236,12 @@
 		<Name>Get GUI Settings</Name>
 		<CallbackMethod>vehicleStatus</CallbackMethod>
 	</Action>
+	<Action id="service_data" deviceFilter="self">
+		<Name>Get Service data</Name>
+		<CallbackMethod>vehicleStatus</CallbackMethod>
+	</Action>
 	<Action id="sep3"/>
-	<Action id="doRefresh" deviceFilter="self">
+	<Action id="vehicle_data" deviceFilter="self">
 		<Name>Refresh all vehicle states</Name>
 		<CallbackMethod>vehicleStatus</CallbackMethod>
 	</Action>

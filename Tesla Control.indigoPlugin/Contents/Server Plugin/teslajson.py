@@ -150,6 +150,11 @@ class Vehicle(dict):
 		result = self.get('data_request/%s' % name)
 		return result
 
+	def info_request(self, name):
+		"""Get vehicle info"""
+		result = self.get('%s' % name)
+		return result
+
 	def wake_up(self):
 		"""Wake the vehicle"""
 		return self.post('wake_up')
@@ -160,6 +165,7 @@ class Vehicle(dict):
 
 	def get(self, command):
 		"""Utility command to get data from API"""
+		logger.debug('vehicles/%i/%s' % (self['id'], command))
 		return self.connection.get('vehicles/%i/%s' % (self['id'], command))
 
 	def post(self, command, data={}):

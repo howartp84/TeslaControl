@@ -38,6 +38,9 @@ class Plugin(indigo.PluginBase):
 		self.version = pluginVersion
 		
 		self.vehicles = []
+		self.forceRefresh = False
+		self.forceDevID = 0
+		self.forceVehicleID = 0
 		#self.debug = True
 		
 		self.states = {}
@@ -46,33 +49,40 @@ class Plugin(indigo.PluginBase):
 		self.numstates = {}
 		self.boolstates = {}
 		
-		self.resetStates = True
+		self.resetStates = False
 		
 		self.cmdStates = {}
 
-		self.cmdStates["set_valet_mode"] = ""
-		self.cmdStates["charge_port_door_open"] = "charge_state"
-		self.cmdStates["charge_standard"] = "charge_state"
-		self.cmdStates["charge_max_range"] = "charge_state"
-		self.cmdStates["set_charge_limit"] = "charge_state"
-		self.cmdStates["charge_start"] = "charge_state"
-		self.cmdStates["charge_stop"] = "charge_state"
-		self.cmdStates["flash_lights"] = "vehicle_state"
-		self.cmdStates["honk_horn"] = ""
-		self.cmdStates["door_unlock"] = "vehicle_state"
-		self.cmdStates["door_lock"] = "vehicle_state"
-		self.cmdStates["set_temps"] = "climate_state"
+		#self.cmdStates["navigation_request"] = ""  #TODO
+		self.cmdStates["actuate_trunk"] = ""
 		self.cmdStates["auto_conditioning_start"] = "climate_state"
 		self.cmdStates["auto_conditioning_stop"] = "climate_state"
-		self.cmdStates["sun_roof_control"] = "vehicle_state"
-		self.cmdStates["actuate_trunk"] = ""
+		self.cmdStates["charge_max_range"] = "charge_state"
 		self.cmdStates["charge_port_door_close"] = "charge_state"
-		self.cmdStates["remote_start_drive"] = ""
-		self.cmdStates["set_sentry_mode"] = ""
-		self.cmdStates["reset_valet_pin"] = ""
-		#self.cmdStates["navigation_request"] = ""  #TODO
+		self.cmdStates["charge_port_door_open"] = "charge_state"
+		self.cmdStates["charge_standard"] = "charge_state"
+		self.cmdStates["charge_start"] = "charge_state"
+		self.cmdStates["charge_stop"] = "charge_state"
+		self.cmdStates["door_lock"] = "vehicle_state"
+		self.cmdStates["door_unlock"] = "vehicle_state"
+		self.cmdStates["flash_lights"] = "vehicle_state"
+		self.cmdStates["honk_horn"] = ""
 		self.cmdStates["remote_seat_heater_request"] = ""
+		self.cmdStates["remote_start_drive"] = ""
 		self.cmdStates["remote_steering_wheel_heater_request"] = ""
+		self.cmdStates["reset_valet_pin"] = ""
+		self.cmdStates["set_charge_limit"] = "charge_state"
+		self.cmdStates["set_sentry_mode"] = ""
+		self.cmdStates["set_temps"] = "climate_state"
+		self.cmdStates["set_valet_mode"] = ""
+		self.cmdStates["sun_roof_control"] = "vehicle_state"
+		self.cmdStates["speed_limit_activate"] = "vehicle_state"
+		self.cmdStates["speed_limit_deactivate"] = "vehicle_state"
+		self.cmdStates["speed_limit_set_limit"] = "vehicle_state"
+		self.cmdStates["speed_limit_clear_pin"] = "vehicle_state"
+		
+		
+
 		
 		
 	########################################
@@ -144,8 +154,12 @@ class Plugin(indigo.PluginBase):
 	def closedDeviceConfigUi(self, valuesDict, userCancelled, typeId, devId):
 		self.debugLog("Device ID: %s" % devId)		
 		vehicleId = valuesDict['car']
-		statusName="doRefresh"
-		self.vehicleStatus2(statusName,vehicleId,devId)
+		#statusName="charge_state"
+		#self.vehicleStatus2(statusName,vehicleId,devId)
+		self.forceDevID = devId
+		self.forceVehicleID = vehicleId
+		self.forceRefresh = True
+		indigo.server.log("ForceRefresh set:  Vehicle will refresh all data within 60 seconds.")		
 		return True
 		
 	### ACTIONS
@@ -271,7 +285,10 @@ class Plugin(indigo.PluginBase):
 			return
 		self.response = "Incomplete"
 		try:
-			self.response = vehicle.data_request(statusName)
+			if (statusName in ["vehicle_data","service_data"]):
+				self.response = vehicle.info_request(statusName)
+			else:
+				self.response = vehicle.data_request(statusName)
 		except HTTPError as h:
 			self.errorLog(h)
 			self.errorLog("Timeout retrieving status: {}".format(statusName))
@@ -346,9 +363,24 @@ class Plugin(indigo.PluginBase):
 			dev.updateStateOnServer("distanceFromWorkM",round(fromWorkM,2), uiValue=str(round(fromWorkM,2))+"m")
 
 	def updateTheState(self,inKey,inValue,dev):
+		inKey = inKey.replace("vehicle_state_","")
+		inKey = inKey.replace("vehicle_config_","")
+		inKey = inKey.replace("charge_state_","")
+		inKey = inKey.replace("climate_state_","")
+		inKey = inKey.replace("drive_state_","")
 		if (inKey in dev.states) and (self.resetStates == False):
-			#self.debugLog(str(type(v)))
-			dev.updateStateOnServer(inKey,inValue)
+			#self.debugLog("%s: %s (%s)" % (inKey,inValue,str(type(inValue))))
+			if (type(inValue) is list):
+				inValue = ','.join(map(str, inValue)) #Join all elements into a string
+			if (type(inValue) is dict):
+				for key, value in inValue.items():
+					newkey = "%s_%s" % (inKey,key)
+					self.updateTheState(newkey,value,dev)
+				return
+			try:
+				dev.updateStateOnServer(inKey,inValue)
+			except TypeError as t:
+				self.errorLog("%s: %s : %s" % (str(inKey),str(inValue),t))
 			if (inKey == dev.ownerProps.get("stateToDisplay","")):
 				dev.updateStateOnServer("displayState",inValue)
 		else:
@@ -395,6 +427,9 @@ class Plugin(indigo.PluginBase):
 			while True:
 				if not self.vehicles:
 					self.getVehicles()
+				if self.forceRefresh:
+					self.vehicleStatus2("vehicle_data",self.forceVehicleID,self.forceDevID)
+					self.forceRefresh = False
 				self.sleep(60) # in seconds
 		except self.StopThread:
 			# do any cleanup here
