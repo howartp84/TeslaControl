@@ -50,6 +50,7 @@ class Plugin(indigo.PluginBase):
 		self.boolstates = {}
 		
 		self.resetStates = False
+		self.lastReturnedStateList = None
 		
 		self.cmdStates = {}
 
@@ -124,6 +125,11 @@ class Plugin(indigo.PluginBase):
 					stateList.remove(key)
 				dynamicState1 = self.getDeviceStateDictForBoolTrueFalseType(key, key, key)
 				stateList.append(dynamicState1)
+			if self.lastReturnedStateList is not None and self.lastReturnedStateList != stateList:
+				indigo.server.log("state list changed")
+				indigo.server.log("old state list: %s" % unicode(self.lastReturnedStateList))
+				indigo.server.log("new state list: %s" % unicode(stateList))
+				self.lastReturnedStateList = stateList
 		return sorted(stateList)
 
 	def getVehicles(self):
@@ -350,7 +356,7 @@ class Plugin(indigo.PluginBase):
 		indigo.server.log("Tesla request %s for vehicle %s: Completed" % (statusName, vehicleId))
 
 		#self.debugLog(str(dev.states))
-		if (statusName == "drive_state"):
+		if (statusName in ["drive_state","vehicle_data"]):
 			self.latLongHome = dev.ownerProps.get("latLongHome","37.394838,-122.150389").split(",")
 			self.latLongWork = dev.ownerProps.get("latLongWork","37.331820,-122.03118").split(",")
 			fromHomeKm = self.getDistance(dev.states['latitude'],dev.states['longitude'],float(self.latLongHome[0]),float(self.latLongHome[1]))
