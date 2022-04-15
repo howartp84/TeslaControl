@@ -6,11 +6,8 @@
 	<Field type="textfield" id="password" secure="true">
 		<Label>Tesla Motors Password:</Label>
 	</Field>
-	<Field type="textfield" id="mfacode" secure="true">
-		<Label>(Optional) Tesla Motors MFA Passcode:</Label>
-	</Field>
-	<Field type="textfield" id="mfaid" secure="true">
-		<Label>(Optional) Tesla Motors MFA ID:</Label>
+	<Field type="textfield" id="refreshToken" secure="true">
+		<Label>Tesla Refresh Token:</Label>
 	</Field>
 	<Field id="showDebugInfo" type="checkbox">
 		<Label>Enable debugging:</Label>

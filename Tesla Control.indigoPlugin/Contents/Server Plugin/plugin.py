@@ -15,7 +15,7 @@
 # http://www.indigodomo.com
 
 import indigo
-import teslajson
+import teslapy
 
 import time
 
@@ -38,7 +38,7 @@ class Plugin(indigo.PluginBase):
 		self.version = pluginVersion
 
 		self.vehicles = []
-		self.forceRefresh = False
+		self.forceRefresh = True
 		self.forceDevID = 0
 		self.forceVehicleID = 0
 		#self.debug = True
@@ -110,44 +110,57 @@ class Plugin(indigo.PluginBase):
 #				dynamicState1 = self.getDeviceStateDictForStringType(key, key, key)
 #				stateList.append(dynamicState1)
 			#self.debugLog(str(stateList))
-			for key in self.strstates.iterkeys():
+			for key in self.strstates.keys():   #for key in self.strstates.iterkeys():
 				if ((self.resetStates) and (key in stateList)):
 					stateList.remove(key)
 				dynamicState1 = self.getDeviceStateDictForStringType(key, key, key)
 				stateList.append(dynamicState1)
-			for key in self.numstates.iterkeys():
+			for key in self.numstates.keys():
 				if ((self.resetStates) and (key in stateList)):
 					stateList.remove(key)
 				dynamicState1 = self.getDeviceStateDictForNumberType(key, key, key)
 				stateList.append(dynamicState1)
-			for key in self.boolstates.iterkeys():
+			for key in self.boolstates.keys():
 				if ((self.resetStates) and (key in stateList)):
 					stateList.remove(key)
 				dynamicState1 = self.getDeviceStateDictForBoolTrueFalseType(key, key, key)
 				stateList.append(dynamicState1)
 			if self.lastReturnedStateList is not None and self.lastReturnedStateList != stateList:
-				indigo.server.log("state list changed")
-				indigo.server.log("old state list: %s" % unicode(self.lastReturnedStateList))
-				indigo.server.log("new state list: %s" % unicode(stateList))
+				self.debugLog("state list changed")
+				self.debugLog("old state list: %s" % str(self.lastReturnedStateList))
+				self.debugLog("new state list: %s" % str(stateList))
 			self.lastReturnedStateList = stateList
-		return sorted(stateList)
+		#self.debugLog(type(stateList))
+		#self.debugLog(stateList)
+		return stateList
 
 	def getVehicles(self):
 		if not self.vehicles:
 			indigo.server.log("Fetching vehicles...")
 			try:
-				connection = teslajson.Connection(self.pluginPrefs['username'],self.pluginPrefs['password'])
-				self.debugLog("Using API token: {}".format(connection.oauth['client_id']))
+				#connection = teslajson.Connection(self.pluginPrefs['username'],self.pluginPrefs['password'])
+				#self.debugLog("Using API token: {}".format(connection.oauth['client_id']))
+				tesla = teslapy.Tesla(self.pluginPrefs['username'])
+				if not tesla.authorized:
+					tesla.refresh_token(refresh_token=self.pluginPrefs['refreshToken'])
+				teslaVehicles = tesla.vehicle_list()
+				#self.debugLog(vehicles[0].get_vehicle_data()['vehicle_state']['car_version'])
+				#self.debugLog("148 TV: ")
+				#self.debugLog(teslaVehicles)
+				#self.debugLog("150 __TV: ")
 			except Exception as e:
 				self.errorLog(e)
 				self.errorLog("Error creating connection")
 				self.errorLog("Plugin version: {}".format(self.version))
 				self.debugLog(traceback.format_exc())
-			self.vehicles = dict((unicode(v['id']),v) for v in connection.vehicles)
-			indigo.server.log("%i vehicles found" % len(self.vehicles))
+				return
+			self.vehicles = dict(((v['id']),v) for v in teslaVehicles)
+			indigo.server.log("{} vehicles found".format(len(self.vehicles)))
+			#self.debugLog("159 SV: ")
 			#self.debugLog(self.vehicles)
 			for v in self.vehicles:
 				self.debugLog(u"Vehicle %s: %s [%s]" % (v,self.vehicles[v]['display_name'],self.vehicles[v]['vin']))
+			#self.debugLog("163 __SV: ")
 		return self.vehicles
 
 	# Generate list of cars
@@ -160,6 +173,7 @@ class Plugin(indigo.PluginBase):
 	def closedDeviceConfigUi(self, valuesDict, userCancelled, typeId, devId):
 		self.debugLog("Device ID: %s" % devId)
 		vehicleId = valuesDict['car']
+		#self.debugLog(valuesDict)
 		#statusName="charge_state"
 		#self.vehicleStatus2(statusName,vehicleId,devId)
 		self.forceDevID = devId
@@ -187,15 +201,19 @@ class Plugin(indigo.PluginBase):
 		commandName = action.pluginTypeId
 		indigo.server.log("Tesla command %s for vehicle %s" % (commandName, vehicleId))
 		try:
-			vehicle = self.getVehicles()[vehicleId]
+			vehicle = self.getVehicles()[int(vehicleId)]
 		except KeyError:
 			self.errorLog(u"Vehicle ID %s not recognised.  Please edit your Tesla Vehicle device and re-select the appropriate car." % vehicleId)
 			dev = indigo.devices[devId]
 			self.debugLog(u"Indigo device '%s' holds vehicleId of %s but this no longer exists in the vehicle list held by Tesla." % (dev.name,vehicleId))
 			return
 		if commandName == "wake_up":
-			self.response = vehicle.wake_up()
-			self.debugLog(self.response)
+			try:
+				self.response = vehicle.sync_wake_up()
+				self.debugLog(self.response)
+			except teslapy.VehicleError as h:
+				self.errorLog(h)
+				self.errorLog("Unable to wake vehicle")
 			return
 		data = action.props
 		#self.debugLog(data)
@@ -207,17 +225,19 @@ class Plugin(indigo.PluginBase):
 			try:
 				self.response = vehicle.command(commandName, data)
 				#self.debugLog(self.response)
-#			except HTTPError as h:
-#				self.errorLog(h)
-				#self.errorLog("Timeout issuing command: {} {}".format(commandName,str(data)))
-				#self.errorLog("Plugin version: {}".format(self.version))
-				#self.debugLog(traceback.format_exc())
+			except teslapy.VehicleError as h:
+				self.errorLog(h)
+				self.errorLog("Unable to perform command: {}".format(commandName))
 			except Exception as e:
 				self.errorLog(e)
 				self.errorLog("Error issuing command: {} {}".format(commandName,str(data)))
 				self.errorLog("Plugin version: {}".format(self.version))
 				self.debugLog(traceback.format_exc())
-			self.debugLog(self.response)
+
+
+			#self.debugLog(self.response)
+
+
 			if (self.response == "Incomplete"):
 				break
 			if (self.response["response"]["reason"] in validReasons) or self.response["response"]["result"] == True:
@@ -263,11 +283,15 @@ class Plugin(indigo.PluginBase):
 		self.vehicleStatus2(statusName,vehicleId,dev.id)
 
 	def vehicleStatus2(self,statusName,vehicleId,devId):
+		if (vehicleId == 0):
+			#self.debugLog("Hold your horses, i'm not ready yet!")
+			return
 		indigo.server.log("Tesla request %s for vehicle %s: Initialising" % (statusName, vehicleId))
 		try:
-			vehicle = self.getVehicles()[vehicleId]
+			vehicle = self.getVehicles()[int(vehicleId)]
 		except KeyError:
 			self.errorLog(u"Vehicle ID %s not recognised.  Please edit your Tesla Vehicle device and re-select the appropriate car." % vehicleId)
+			self.errorLog(self.getVehicles())
 			dev = indigo.devices[devId]
 			self.debugLog(u"Indigo device '%s' holds vehicleId of %s but this no longer exists in the vehicle list held by Tesla." % (dev.name,vehicleId))
 			return
@@ -275,26 +299,33 @@ class Plugin(indigo.PluginBase):
 
 		#self.debugLog(statusName)
 
-		if (statusName == "doRefresh"):
-			action = "charge_state"
-			self.vehicleStatus2(action,vehicleId,devId)
-			action = "drive_state"
-			self.vehicleStatus2(action,vehicleId,devId)
-			action = "climate_state"
-			self.vehicleStatus2(action,vehicleId,devId)
-			action = "vehicle_state"
-			self.vehicleStatus2(action,vehicleId,devId)
-			action = "gui_settings"
-			self.vehicleStatus2(action,vehicleId,devId)
-			action = "vehicle_config"
-			self.vehicleStatus2(action,vehicleId,devId)
-			return
+#		if (statusName == "doRefresh"):
+#			action = "charge_state"
+#			self.vehicleStatus2(action,vehicleId,devId)
+#			action = "drive_state"
+#			self.vehicleStatus2(action,vehicleId,devId)
+#			action = "climate_state"
+#			self.vehicleStatus2(action,vehicleId,devId)
+#			action = "vehicle_state"
+#			self.vehicleStatus2(action,vehicleId,devId)
+#			action = "gui_settings"
+#			self.vehicleStatus2(action,vehicleId,devId)
+#			action = "vehicle_config"
+#			self.vehicleStatus2(action,vehicleId,devId)
+#			return
 		self.response = "Incomplete"
 		try:
-			if (statusName in ["vehicle_data","service_data"]):
-				self.response = vehicle.info_request(statusName)
-			else:
-				self.response = vehicle.data_request(statusName)
+			if (vehicle.available() == False):
+				vehicle.sync_wake_up() #Loops until online or raises VehicleError if wakeup times out
+			self.response = vehicle.get_vehicle_data()
+		except teslapy.HTTPError as h:
+			self.errorLog(h)
+			return
+			#self.errorLog("Timeout retrieving status: {}".format(statusName))
+			#self.debugLog(traceback.format_exc())
+		except teslapy.VehicleError as h:
+			self.errorLog(h)
+			self.errorLog("Unable to refresh vehicle states")
 #		except HTTPError as h:
 #			self.errorLog(h)
 #			self.errorLog("Timeout retrieving status: {}".format(statusName))
@@ -303,7 +334,12 @@ class Plugin(indigo.PluginBase):
 			self.errorLog(e)
 			self.errorLog("Timeout retrieving status: {}".format(statusName))
 			self.debugLog(traceback.format_exc())
-		self.debugLog(u"Response: %s" % str(self.response))
+
+
+		#self.debugLog(u"Response: %s" % str(self.response))
+		#self.debugLog("331 if you want a response printout")
+
+
 		if (self.response == None):
 			self.errorLog("No reply...")
 			return
@@ -336,16 +372,20 @@ class Plugin(indigo.PluginBase):
 					return
 			else:
 				indigo.server.log("Tesla request %s for vehicle %s: Data received" % (statusName, vehicleId))
-		for k,v in sorted(self.response['response'].items()):
+		for k,v in self.response.items():
 			#self.debugLog("State %s, value %s, type %s" % (k,v,type(v)))
 			self.states[k] = v
-			if (type(v) is dict):
+			if (type(v) is teslapy.JsonDict):
 				#indigo.server.log(u"Skipping state %s: JSON Dict found" % (k))
 				#self.debugLog(v)
+				#self.debugLog("370")
 				for innerv in v:
 					#self.debugLog("State %s, value %s, type %s" % (innerv,v[innerv],type(v[innerv])))
+					#self.debugLog("373 about to updateTheState with a dict")
 					self.updateTheState("%s_%s" % (k,innerv),v[innerv],dev)
+				#self.debugLog("375")
 			else:
+				#self.debugLog("377 updateTheState with a value")
 				self.updateTheState(k,v,dev)
 		if (self.resetStates):
 			indigo.server.log("Tesla request %s for vehicle %s: New states found - reinitialising" % (statusName, vehicleId))
@@ -378,7 +418,7 @@ class Plugin(indigo.PluginBase):
 			#self.debugLog("%s: %s (%s)" % (inKey,inValue,str(type(inValue))))
 			if (type(inValue) is list):
 				inValue = ','.join(map(str, inValue)) #Join all elements into a string
-			if (type(inValue) is dict):
+			if (type(inValue) is teslapy.JsonDict):
 				for key, value in inValue.items():
 					newkey = "%s_%s" % (inKey,key)
 					self.updateTheState(newkey,value,dev)
@@ -386,7 +426,7 @@ class Plugin(indigo.PluginBase):
 			try:
 				dev.updateStateOnServer(inKey,inValue)
 			except TypeError as t:
-				self.errorLog("%s: %s : %s" % (str(inKey),str(inValue),t))
+				self.errorLog("418 %s: %s : %s" % (str(inKey),str(inValue),t))
 			if (inKey == dev.ownerProps.get("stateToDisplay","")):
 				dev.updateStateOnServer("displayState",inValue)
 		else:
@@ -401,8 +441,6 @@ class Plugin(indigo.PluginBase):
 			elif (type(inValue) is bool):
 				self.boolstates[inKey] = inValue
 			elif (type(inValue) is str):
-				self.strstates[inKey] = inValue
-			elif (type(inValue) is unicode):
 				self.strstates[inKey] = inValue
 			else:
 				self.strstates[inKey] = inValue

@@ -67,7 +67,7 @@ class Tesla(OAuth2Session):
                  cache_file='cache.json', cache_loader=None, cache_dumper=None):
         super(Tesla, self).__init__(client_id=SSO_CLIENT_ID)
         if not email:
-            raise ValueError('`email` is not set')
+            raise ValueError("TeslaPy: " + '`email` is not set')
         self.email = email
         self.authenticator = authenticator or self._authenticate
         self.cache_loader = cache_loader or self._cache_load
@@ -203,7 +203,7 @@ class Tesla(OAuth2Session):
         Return type: dict
         """
         if not self.authorized and not kwargs.get('refresh_token'):
-            raise ValueError('`refresh_token` is not set')
+            raise ValueError("TeslaPy: " + '`refresh_token` is not set')
         token_url = urljoin(self._sso_base, token_url)
         kwargs.setdefault('verify', self.verify)
         super(Tesla, self).refresh_token(token_url, **kwargs)
@@ -267,7 +267,7 @@ class Tesla(OAuth2Session):
         self.token = token or self.token
         cache = self.cache_loader()
         if not isinstance(cache, dict):
-            raise ValueError('`cache_loader` must return dict')
+            raise ValueError("TeslaPy: " + '`cache_loader` must return dict')
         # Write token to cache
         if self.authorized:
             cache[self.email] = {'url': self._sso_base, 'sso': self.token}
@@ -306,7 +306,7 @@ class Tesla(OAuth2Session):
         try:
             endpoint = self.endpoints[name]
         except KeyError:
-            raise ValueError('Unknown endpoint name ' + name)
+            raise ValueError("TeslaPy: " + 'Unknown endpoint name ' + name)
         # Fetch token if not authorized and API requires authorization
         if endpoint['AUTH'] and not self.authorized:
             self.fetch_token()
@@ -314,7 +314,7 @@ class Tesla(OAuth2Session):
         try:
             uri = endpoint['URI'].format(**path_vars)
         except KeyError as e:
-            raise ValueError('%s requires path variable %s' % (name, e))
+            raise ValueError("TeslaPy: " + '%s requires path variable %s' % (name, e))
         # Perform request using given keyword arguments as parameters
         arg_name = 'params' if endpoint['TYPE'] == 'GET' else 'json'
         serialize = endpoint.get('CONTENT') != 'HTML' and name != 'STATUS'
@@ -466,7 +466,7 @@ class Vehicle(JsonDict):
                     break
                 # Raise exception when task has timed out
                 if start_time + timeout - interval < time.time():
-                    raise VehicleError('%s not woken up within %s seconds'
+                    raise VehicleError("TeslaPy: Error: " + '%s not woken up within %s seconds'
                                        % (self['display_name'], timeout))
                 interval *= backoff
             logger.info('%s is %s', self['display_name'], self['state'])
@@ -552,7 +552,7 @@ class Vehicle(JsonDict):
     def __missing__(self, key):
         """ Get all the data request endpoints on-the-fly. Raises KeyError. """
         if key not in self.get_vehicle_data():
-            raise KeyError(key)
+            raise KeyError("TeslaPy: KeyError({})".format(key))
         return self[key]
 
     def dist_units(self, miles, speed=False):
@@ -631,9 +631,9 @@ class Vehicle(JsonDict):
         VehicleError or HTTPError. """
         response = self.api(name, **kwargs).get('response')
         if not response or 'result' not in response:
-            raise VehicleError(name + " doesn't seem to be a command")
+            raise VehicleError("TeslaPy: " + name + " doesn't seem to be a command")
         if not response['result']:
-            raise VehicleError(response['reason'])
+            raise VehicleError("TeslaPy: " + response['reason'])
         return response['result']
 
 
