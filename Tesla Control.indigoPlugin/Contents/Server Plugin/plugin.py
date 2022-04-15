@@ -21,7 +21,7 @@ import time
 
 from math import sin, cos, sqrt, atan2, radians
 
-from urllib2 import HTTPError
+#from urllib2 import HTTPError
 import traceback
 
 ## TODO
@@ -36,22 +36,22 @@ class Plugin(indigo.PluginBase):
 		indigo.PluginBase.__init__(self, pluginId, pluginDisplayName, pluginVersion, pluginPrefs)
 		self.debug = pluginPrefs.get("showDebugInfo", True)
 		self.version = pluginVersion
-		
+
 		self.vehicles = []
 		self.forceRefresh = False
 		self.forceDevID = 0
 		self.forceVehicleID = 0
 		#self.debug = True
-		
+
 		self.states = {}
-		
+
 		self.strstates = {}
 		self.numstates = {}
 		self.boolstates = {}
-		
+
 		self.resetStates = False
 		self.lastReturnedStateList = None
-		
+
 		self.cmdStates = {}
 
 		#self.cmdStates["navigation_request"] = ""  #TODO
@@ -81,17 +81,17 @@ class Plugin(indigo.PluginBase):
 		self.cmdStates["speed_limit_deactivate"] = "vehicle_state"
 		self.cmdStates["speed_limit_set_limit"] = "vehicle_state"
 		self.cmdStates["speed_limit_clear_pin"] = "vehicle_state"
-		
-		
 
-		
-		
+
+
+
+
 	########################################
 	#def startup(self):
 		#self.debugLog("Username: %s" % self.pluginPrefs.get("username","(Not yet saved)"))
 		#self.debugLog("Username: %s" % self.un)
 		#self.getVehicles()
-		
+
 	def closedPrefsConfigUi(self, valuesDict, userCancelled):
 		# Since the dialog closed we want to set the debug flag - if you don't directly use
 		# a plugin's properties (and for debugLog we don't) you'll want to translate it to
@@ -104,7 +104,7 @@ class Plugin(indigo.PluginBase):
 				indigo.server.log("Debug logging disabled")
 
 	def getDeviceStateList(self, dev): #Override state list
-		stateList = indigo.PluginBase.getDeviceStateList(self, dev)      
+		stateList = indigo.PluginBase.getDeviceStateList(self, dev)
 		if stateList is not None:
 #			for key in self.states.iterkeys():
 #				dynamicState1 = self.getDeviceStateDictForStringType(key, key, key)
@@ -129,7 +129,7 @@ class Plugin(indigo.PluginBase):
 				indigo.server.log("state list changed")
 				indigo.server.log("old state list: %s" % unicode(self.lastReturnedStateList))
 				indigo.server.log("new state list: %s" % unicode(stateList))
-				self.lastReturnedStateList = stateList
+			self.lastReturnedStateList = stateList
 		return sorted(stateList)
 
 	def getVehicles(self):
@@ -150,7 +150,7 @@ class Plugin(indigo.PluginBase):
 				self.debugLog(u"Vehicle %s: %s [%s]" % (v,self.vehicles[v]['display_name'],self.vehicles[v]['vin']))
 		return self.vehicles
 
-	# Generate list of cars	
+	# Generate list of cars
 	def carListGenerator(self, filter="", valuesDict=None, typeId="", targetId=0):
 		cars = [(k, "%s (%s)" % (v['display_name'], v['vin']))
 				for k,v in self.getVehicles().items()]
@@ -158,16 +158,16 @@ class Plugin(indigo.PluginBase):
 		return cars
 
 	def closedDeviceConfigUi(self, valuesDict, userCancelled, typeId, devId):
-		self.debugLog("Device ID: %s" % devId)		
+		self.debugLog("Device ID: %s" % devId)
 		vehicleId = valuesDict['car']
 		#statusName="charge_state"
 		#self.vehicleStatus2(statusName,vehicleId,devId)
 		self.forceDevID = devId
 		self.forceVehicleID = vehicleId
 		self.forceRefresh = True
-		indigo.server.log("ForceRefresh set:  Vehicle will refresh all data within 60 seconds.")		
+		indigo.server.log("ForceRefresh set:  Vehicle will refresh all data within 60 seconds.")
 		return True
-		
+
 	### ACTIONS
 	def validateActionConfigUi(self, valuesDict, typeId, actionId):
 		if typeId=='set_charge_limit':
@@ -181,7 +181,7 @@ class Plugin(indigo.PluginBase):
 				errorsDict['percent'] = "A percentage between 50 and 100"
 				return (False, valuesDict, errorsDict)
 		return (True, valuesDict)
-	
+
 	def vehicleCommand(self, action, dev):
 		vehicleId = dev.pluginProps['car']
 		commandName = action.pluginTypeId
@@ -207,11 +207,11 @@ class Plugin(indigo.PluginBase):
 			try:
 				self.response = vehicle.command(commandName, data)
 				#self.debugLog(self.response)
-			except HTTPError as h:
-				self.errorLog(h)
-				self.errorLog("Timeout issuing command: {} {}".format(commandName,str(data)))
-				self.errorLog("Plugin version: {}".format(self.version))
-				self.debugLog(traceback.format_exc())
+#			except HTTPError as h:
+#				self.errorLog(h)
+				#self.errorLog("Timeout issuing command: {} {}".format(commandName,str(data)))
+				#self.errorLog("Plugin version: {}".format(self.version))
+				#self.debugLog(traceback.format_exc())
 			except Exception as e:
 				self.errorLog(e)
 				self.errorLog("Error issuing command: {} {}".format(commandName,str(data)))
@@ -235,14 +235,14 @@ class Plugin(indigo.PluginBase):
 				self.debugLog("Command %s declined:  Vehicle unavailable" % commandName)
 				indigo.server.log(u"Automatically sending wake_up command before retrying...")
 				self.debugLog(u"Automatically sending wake_up command before retrying...")
-				vehicle.wake_up() #Try waking it up 
+				vehicle.wake_up() #Try waking it up
 				indigo.server.log(u"Waiting 30 seconds before retrying...")
 				time.sleep(30) #20 seconds here because loop waits 10 itself
 			else:
 				self.debugLog(u"Failed attempt %s/5 because: %s" % (i,self.response["response"]["reason"]))
 				if i > 3:
 					self.debugLog(u"Automatically sending wake_up command before retrying...")
-					vehicle.wake_up() #Try waking it up 
+					vehicle.wake_up() #Try waking it up
 					self.debugLog(u"Waiting 30 seconds before retrying...")
 					time.sleep(20) #20 seconds here because loop waits 10 itself
 				else:
@@ -261,7 +261,7 @@ class Plugin(indigo.PluginBase):
 		if (statusName == ""):
 			return
 		self.vehicleStatus2(statusName,vehicleId,dev.id)
-		
+
 	def vehicleStatus2(self,statusName,vehicleId,devId):
 		indigo.server.log("Tesla request %s for vehicle %s: Initialising" % (statusName, vehicleId))
 		try:
@@ -272,9 +272,9 @@ class Plugin(indigo.PluginBase):
 			self.debugLog(u"Indigo device '%s' holds vehicleId of %s but this no longer exists in the vehicle list held by Tesla." % (dev.name,vehicleId))
 			return
 		dev = indigo.devices[devId]
-		
+
 		#self.debugLog(statusName)
-		
+
 		if (statusName == "doRefresh"):
 			action = "charge_state"
 			self.vehicleStatus2(action,vehicleId,devId)
@@ -295,10 +295,10 @@ class Plugin(indigo.PluginBase):
 				self.response = vehicle.info_request(statusName)
 			else:
 				self.response = vehicle.data_request(statusName)
-		except HTTPError as h:
-			self.errorLog(h)
-			self.errorLog("Timeout retrieving status: {}".format(statusName))
-			self.debugLog(traceback.format_exc())
+#		except HTTPError as h:
+#			self.errorLog(h)
+#			self.errorLog("Timeout retrieving status: {}".format(statusName))
+#			self.debugLog(traceback.format_exc())
 		except Exception as e:
 			self.errorLog(e)
 			self.errorLog("Timeout retrieving status: {}".format(statusName))
@@ -326,7 +326,7 @@ class Plugin(indigo.PluginBase):
 						return
 					indigo.server.log(u"Automatically sending wake_up command before retrying...")
 					self.debugLog(u"Automatically sending wake_up command before retrying...")
-					vehicle.wake_up() #Try waking it up 
+					vehicle.wake_up() #Try waking it up
 					indigo.server.log(u"Waiting 30 seconds before retrying...")
 					time.sleep(30) #30 seconds
 					self.vehicleStatus2(statusName,vehicleId,devId)
@@ -427,7 +427,7 @@ class Plugin(indigo.PluginBase):
 		#self.debugLog(u"Result: %s" % distance)
 		#self.debugLog(u"Should be: 278.546 km")
 		return distance
-	
+
 	def runConcurrentThread(self):
 		try:
 			while True:
