@@ -66,7 +66,7 @@ class Plugin(indigo.PluginBase):
 		self.cmdStates["charge_stop"] = "charge_state"
 		self.cmdStates["door_lock"] = "vehicle_state"
 		self.cmdStates["door_unlock"] = "vehicle_state"
-		self.cmdStates["flash_lights"] = "vehicle_state"
+		self.cmdStates["flash_lights"] = ""
 		self.cmdStates["honk_horn"] = ""
 		self.cmdStates["remote_seat_heater_request"] = ""
 		self.cmdStates["remote_start_drive"] = ""
@@ -198,7 +198,7 @@ class Plugin(indigo.PluginBase):
 
 	def vehicleCommand(self, action, dev):
 		vehicleId = dev.pluginProps['car']
-		commandName = action.pluginTypeId
+		commandName = (action.pluginTypeId).upper()
 		indigo.server.log("Tesla command %s for vehicle %s" % (commandName, vehicleId))
 		try:
 			vehicle = self.getVehicles()[int(vehicleId)]
@@ -207,7 +207,7 @@ class Plugin(indigo.PluginBase):
 			dev = indigo.devices[devId]
 			self.debugLog(u"Indigo device '%s' holds vehicleId of %s but this no longer exists in the vehicle list held by Tesla." % (dev.name,vehicleId))
 			return
-		if commandName == "wake_up":
+		if commandName == "WAKE_UP":
 			try:
 				self.response = vehicle.sync_wake_up()
 				self.debugLog(self.response)
@@ -218,13 +218,26 @@ class Plugin(indigo.PluginBase):
 		data = action.props
 		#self.debugLog(data)
 		i = 0
-		validReasons = ["already on", "already off",""]
-		invalidReasons = ["cabin comfort remote settings not enabled"]
+		validReasons = ["already on", "already off","already open", "already closed", ""]
+		invalidReasons = ["cabin comfort remote settings not enabled","not_supported"]
 		self.response = "Incomplete"
 		while True:
 			try:
-				self.response = vehicle.command(commandName, data)
+				self.response = vehicle.command(commandName, **data)
 				#self.debugLog(self.response)
+			except teslapy.HTTPError as h:
+				#self.debugLog(h.response.__dict__)
+				self.debugLog(h.response.reason)
+				#self.debugLog(h.error)
+				#self.debugLog(h.__dict__)
+				if (h.response.reason.find("vehicle unavailable") != -1):
+					indigo.server.log("Command {} declined:  Vehicle unavailable".format(commandName))
+					self.debugLog("Command {} declined:  Vehicle unavailable".format(commandName))
+					indigo.server.log("Automatically sending wake_up command before retrying...")
+					self.debugLog("Automatically sending wake_up command before retrying...")
+					vehicle.sync_wake_up() #Try waking it up - Loops until online or raises VehicleError if wakeup times out
+					self.response = "Timeout - retry"
+					continue #Restart while() loop
 			except teslapy.VehicleError as h:
 				self.errorLog(h)
 				self.errorLog("Unable to perform command: {}".format(commandName))
@@ -235,21 +248,25 @@ class Plugin(indigo.PluginBase):
 				self.debugLog(traceback.format_exc())
 
 
-			#self.debugLog(self.response)
+			self.debugLog("Response: {}".format(self.response))
 
 
 			if (self.response == "Incomplete"):
 				break
-			if (self.response["response"]["reason"] in validReasons) or self.response["response"]["result"] == True:
-				indigo.server.log("Sent %s successfully.  Refreshing appropriate states..." % commandName)
-				self.debugLog("Sent %s successfully.  Refreshing appropriate states..." % commandName)
-				action.pluginTypeId = self.cmdStates[commandName]
-				self.vehicleStatus(action,dev)
+			if (self.response["result"]) or (self.response["reason"] in validReasons):
+				action.pluginTypeId = self.cmdStates[commandName.lower()]
+				if (action.pluginTypeId == ""): #No need to refresh states
+					indigo.server.log("Sent {} successfully.".format(commandName))
+				else:
+					indigo.server.log("Sent {} successfully.  Refreshing appropriate states...".format(commandName))
+					self.debugLog("Sent {} successfully.  Refreshing appropriate states...".format(commandName))
+					self.vehicleStatus(action,dev)
 				break
-			if (self.response["response"]["reason"] in invalidReasons):
-				indigo.server.log("Command %s declined:  %s" % (commandName,self.response["response"]["reason"]))
-				self.debugLog("Command %s declined:  %s" % (commandName,self.response["response"]["reason"]))
+			if (self.response["reason"] in invalidReasons):
+				indigo.server.log("Command %s declined:  %s" % (commandName,self.response["reason"]))
+				self.debugLog("Command %s declined:  %s" % (commandName,self.response["reason"]))
 				break
+
 			if "vehicle unavailable" in self.response["response"]["error"] or "mothership" in self.response["response"]["error"]:
 				indigo.server.log("Command %s declined:  Vehicle unavailable" % commandName)
 				self.debugLog("Command %s declined:  Vehicle unavailable" % commandName)
@@ -278,7 +295,7 @@ class Plugin(indigo.PluginBase):
 		vehicleId = dev.pluginProps['car']
 		statusName = action.pluginTypeId
 		#self.debugLog(str(dev))
-		if (statusName == ""):
+		if (statusName == ""): #eg Flash_Lights, Honk_Horn don't modify data so no point refreshing
 			return
 		self.vehicleStatus2(statusName,vehicleId,dev.id)
 
@@ -298,6 +315,7 @@ class Plugin(indigo.PluginBase):
 		dev = indigo.devices[devId]
 
 		#self.debugLog(statusName)
+		#self.debugLog(vehicle)
 
 #		if (statusName == "doRefresh"):
 #			action = "charge_state"
@@ -316,22 +334,24 @@ class Plugin(indigo.PluginBase):
 		self.response = "Incomplete"
 		try:
 			if (vehicle.available() == False):
+				self.debugLog("Vehicle is offline - calling Wake_Up")
 				vehicle.sync_wake_up() #Loops until online or raises VehicleError if wakeup times out
+			self.debugLog("Vehicle is online - fetching data")
 			self.response = vehicle.get_vehicle_data()
 		except teslapy.HTTPError as h:
-			self.errorLog(h)
+			self.errorLog("Error line 324: {}".format(h))
 			return
 			#self.errorLog("Timeout retrieving status: {}".format(statusName))
 			#self.debugLog(traceback.format_exc())
 		except teslapy.VehicleError as h:
-			self.errorLog(h)
+			self.errorLog("Error line 329: {}".format(h))
 			self.errorLog("Unable to refresh vehicle states")
 #		except HTTPError as h:
-#			self.errorLog(h)
+#			self.errorLog("Error line 332: {}".format(h))
 #			self.errorLog("Timeout retrieving status: {}".format(statusName))
 #			self.debugLog(traceback.format_exc())
 		except Exception as e:
-			self.errorLog(e)
+			self.errorLog("Error line 336: {}".format(e))
 			self.errorLog("Timeout retrieving status: {}".format(statusName))
 			self.debugLog(traceback.format_exc())
 

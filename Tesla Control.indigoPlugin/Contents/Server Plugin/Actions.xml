@@ -37,6 +37,11 @@
 		<Name>Open Charge Port</Name>
 		<CallbackMethod>vehicleCommand</CallbackMethod>
 	</Action>
+<Action id="charge_port_door_close" deviceFilter="self">
+		<Name>Close Charge Port</Name>
+		<CallbackMethod>vehicleCommand</CallbackMethod>
+	</Action>
+
 	<Action id="charge_standard" deviceFilter="self">
 		<Name>Set Charge Limit to Standard</Name>
 		<CallbackMethod>vehicleCommand</CallbackMethod>
@@ -82,7 +87,7 @@
 		<Name>Unlock the Trunk</Name>
 		<CallbackMethod>vehicleCommand</CallbackMethod>
 		<ConfigUI>
-			<Field type="menu" id="which_trunk" defaultValue="close">
+			<Field type="menu" id="which_trunk" defaultValue="front">
 				<Label>Which trunk:</Label>
 				<List>
 					<Option value="front">Front</Option>
@@ -156,7 +161,7 @@
 		<Name>Stop HVAC</Name>
 		<CallbackMethod>vehicleCommand</CallbackMethod>
 	</Action>
-	<Action id="sun_roof_control" deviceFilter="self">
+	<Action id="change_sunroof_state" deviceFilter="self">
 		<Name>Move Pano Roof</Name>
 		<CallbackMethod>vehicleCommand</CallbackMethod>
 		<ConfigUI>
@@ -244,5 +249,19 @@
 	<Action id="vehicle_data" deviceFilter="self">
 		<Name>Refresh all vehicle states</Name>
 		<CallbackMethod>vehicleStatus</CallbackMethod>
+	</Action>
+	<Action id="sep4"/>
+	<Action id="invalidCMD" deviceFilter="self">
+		<Name>Invalid Command for Testing</Name>
+		<CallbackMethod>vehicleCommand</CallbackMethod>
+		<ConfigUI>
+			<Field type="menu" id="which_one" defaultValue="thisone">
+				<Label>Which one:</Label>
+				<List>
+					<Option value="thisone">This one</Option>
+					<Option value="thatone">That one</Option>
+				</List>
+			</Field>
+		</ConfigUI>
 	</Action>
 </Actions>

@@ -1669,5 +1669,10 @@
     "TYPE": "GET",
     "URI": "mobile-app/commerce/feature-flags",
     "AUTH": true
+  },
+    "INVALIDCMD": {
+    "TYPE": "POST",
+    "URI": "api/1/vehicles/{vehicle_id}/command/invalid_cmd/{which_one}",
+    "AUTH": true
   }
 }

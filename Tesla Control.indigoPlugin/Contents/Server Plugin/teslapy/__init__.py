@@ -315,6 +315,7 @@ class Tesla(OAuth2Session):
             uri = endpoint['URI'].format(**path_vars)
         except KeyError as e:
             raise ValueError("TeslaPy: " + '%s requires path variable %s' % (name, e))
+        logger.debug(uri)
         # Perform request using given keyword arguments as parameters
         arg_name = 'params' if endpoint['TYPE'] == 'GET' else 'json'
         serialize = endpoint.get('CONTENT') != 'HTML' and name != 'STATUS'
@@ -629,12 +630,14 @@ class Vehicle(JsonDict):
     def command(self, name, **kwargs):
         """ Wrapper method for vehicle command response error handling. Raises
         VehicleError or HTTPError. """
-        response = self.api(name, **kwargs).get('response')
+       	response = self.api(name, **kwargs).get('response')
+#        if (name == "CHARGE_PORT_DOOR_CLOSE"):
+#        	raise VehicleError(response)
         if not response or 'result' not in response:
             raise VehicleError("TeslaPy: " + name + " doesn't seem to be a command")
-        if not response['result']:
-            raise VehicleError("TeslaPy: " + response['reason'])
-        return response['result']
+#        if not response['result']:
+#            raise VehicleError("TeslaPy: " + response['reason'])
+        return response
 
 
 class ProductError(Exception):
